@@ -39,13 +39,23 @@ class UserInfoMod(loader.Module):
             full = await self.client(GetFullUserRequest((await message.get_reply_message()).from_id))
         else:
             args = utils.get_args(message)
-            full = await self.client(GetFullUserRequest(args[0]))
+            if not args:
+                return await utils.answer(message, '<b>No args or reply was provided.</b>')
+            try:
+                full = await self.client(GetFullUserRequest(args[0]))
+            except ValueError:
+                return await utils.answer(message, _("<b>Couldn't find that user.</b>"))
         logger.debug(full)
         reply = _("First name: <code>{}</code>").format(utils.escape_html(ascii(full.user.first_name)))
         if full.user.last_name is not None:
             reply += _("\nLast name: <code>{}</code>").format(utils.escape_html(ascii(full.user.last_name)))
         reply += _("\nBio: <code>{}</code>").format(utils.escape_html(ascii(full.about)))
         reply += _("\nRestricted: <code>{}</code>").format(utils.escape_html(str(full.user.restricted)))
+        reply += _("\nDeleted: <code>{}</code>").format(utils.escape_html(str(full.user.deleted)))
+        reply += _("\nBot: <code>{}</code>").format(utils.escape_html(str(full.user.bot)))
+        reply += _("\nVerified: <code>{}</code>").format(utils.escape_html(str(full.user.verified)))
+        if full.user.photo:
+            reply += _("\nDC ID: <code>{}</code>").format(utils.escape_html(str(full.user.photo.dc_id)))
         await message.edit(reply)
 
     async def permalinkcmd(self, message):
