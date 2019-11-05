@@ -3,6 +3,7 @@ afk
 autoprofile
 b_emoji
 forward
+google
 info
 insult
 lydia
@@ -21,6 +22,7 @@ transfersh
 translate
 tts
 typer
+urbandictionary
 userinfo
 weather
 xda

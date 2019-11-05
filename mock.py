@@ -17,6 +17,7 @@
 from .. import loader, utils
 import logging
 import random
+import re
 from pyfiglet import Figlet, FigletFont, FontNotFound
 
 logger = logging.getLogger(__name__)
@@ -33,13 +34,13 @@ class MockMod(loader.Module):
 
     async def mockcmd(self, message):
         """Use in reply to another message or as .mock <text>"""
-        if len(utils.get_args_raw(message)) == 0:
-            text = (await message.get_reply_message()).message
-        else:
-            text = utils.get_args_raw(message.message)
+        text = utils.get_args_raw(message.message)
         if len(text) == 0:
-            await message.edit(_("rEpLy To A mEsSaGe To MoCk It (Or TyPe ThE mEsSaGe AfTeR tHe CoMmAnD)"))
-            return
+            if message.is_reply:
+                text = (await message.get_reply_message()).message
+            else:
+                await message.edit(_("rEpLy To A mEsSaGe To MoCk It (Or TyPe ThE mEsSaGe AfTeR tHe CoMmAnD)"))
+                return
         text = list(text)
         n = 0
         rn = 0
@@ -72,3 +73,19 @@ class MockMod(loader.Module):
             await message.edit(_("<code>Font not found</code>"))
             return
         await message.edit("<code>\u206a" + utils.escape_html(fig.renderText(text)) + "</code>")
+
+    async def uwucmd(self, message):
+        """Use in wepwy to anyothew message ow as .uwu <text>"""
+        text = utils.get_args_raw(message.message)
+        if len(text) == 0:
+            if message.is_reply:
+                text = (await message.get_reply_message()).message
+            else:
+                await message.edit(_("<code>I nyeed some text fow the nyeko.</code>"))
+                return
+        reply_text = re.sub(r"(r|l)", "w", text)
+        reply_text = re.sub(r"(R|L)", "W", reply_text)
+        reply_text = re.sub(r"n([aeiouAEIOU])", r"ny\1", reply_text)
+        reply_text = re.sub(r"N([aeiouAEIOU])", r"Ny\1", reply_text)
+        reply_text = reply_text.replace("ove", "uv")
+        await message.edit(reply_text)

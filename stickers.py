@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 try:
     import tgs
 except OSError:
-    logger.exception()
+    logger.exception("TGS not available")
 
 warnings.simplefilter('error', Image.DecompressionBombWarning)
 
@@ -43,7 +43,7 @@ def register(cb):
 class StickersMod(loader.Module):
     """Tasks with stickers"""
     def __init__(self):
-        self.config = loader.ModuleConfig("STICKERS_USERNAME", "Stickers", "Bot username to create stickers via",
+        self.config = loader.ModuleConfig("STICKERS_ID", 429000, "Bot ID to create stickers via",
                                           "STICKER_SIZE", (512, 512), "The size of one sticker",
                                           "DEFAULT_STICKER_EMOJI", u"🤔", "The emoji to use for stickers by default")
         self.name = _("Stickers")
@@ -65,12 +65,13 @@ class StickersMod(loader.Module):
                 sticker = message
             else:
                 logger.debug("user didnt send any sticker/photo or reply")
-                await message.edit(_("Reply to a sticker or photo to nick it"))
-                return
+                async for sticker in message.client.iter_messages(message.to_id, 10):
+                    if sticker.sticker or sticker.photo:
+                        break  # Changes message into the right one
         else:
             sticker = await message.get_reply_message()
         if not (sticker.sticker or sticker.photo):
-            await message.edit(_("That ain't no sticca"))
+            await message.edit(_("Reply to a sticker or photo to nick it"))
             return
         logger.debug("user did send photo/sticker")
         if len(args) > 1:
@@ -88,7 +89,7 @@ class StickersMod(loader.Module):
             logger.debug(img)
             if animated:
                 async with self._lock:
-                    conv = message.client.conversation("t.me/" + self.config["STICKERS_USERNAME"],
+                    conv = message.client.conversation(self.config["STICKERS_ID"],
                                                        timeout=5, exclusive=True)
                     async with conv:
                         first = await conv.send_message("/cancel")
@@ -101,7 +102,7 @@ class StickersMod(loader.Module):
                             await button.click()
                         else:
                             logger.warning("there's no buttons!")
-                            await message.client.send_message("t.me/" + self.config["STICKERS_USERNAME"], "/cancel")
+                            await message.client.send_message(self.config["STICKERS_ID"], "/cancel")
                             await message.edit("Something went wrong")
                             return
                         # We have sent the pack we wish to modify.
@@ -112,12 +113,11 @@ class StickersMod(loader.Module):
                             logger.error(r0)
                             await message.edit(_("<code>That isn't an animated sticker pack</code>"))
                             msgs = []
-                            async for msg in message.client.iter_messages(entity="t.me/"
-                                                                          + self.config["STICKERS_USERNAME"],
+                            async for msg in message.client.iter_messages(entity=self.config["STICKERS_ID"],
                                                                           min_id=first.id, reverse=True):
                                 msgs += [msg.id]
                             logger.debug(msgs)
-                            await message.client.delete_messages("t.me/" + self.config["STICKERS_USERNAME"],
+                            await message.client.delete_messages(self.config["STICKERS_ID"],
                                                                  msgs + [first])
                             return
                         uploaded = await message.client.upload_file(img, file_name="AnimatedSticker.tgs")
@@ -137,12 +137,12 @@ class StickersMod(loader.Module):
                             await message.edit(_("<code>Something went wrong internally!</code>"))
                             return
                     msgs = []
-                    async for msg in message.client.iter_messages(entity="t.me/" + self.config["STICKERS_USERNAME"],
+                    async for msg in message.client.iter_messages(entity=self.config["STICKERS_ID"],
                                                                   min_id=first.id,
                                                                   reverse=True):
                         msgs += [msg.id]
                     logger.debug(msgs)
-                    await message.client.delete_messages("t.me/" + self.config["STICKERS_USERNAME"], msgs + [first])
+                    await message.client.delete_messages(self.config["STICKERS_ID"], msgs + [first])
                 if "emoji" in r2.message:
                     # The emoji(s) are invalid.
                     logger.error("Bad response from StickerBot 2")
@@ -160,10 +160,8 @@ class StickersMod(loader.Module):
                     # The data is now in thumb.
                     # Lock access to @Stickers
                     async with self._lock:
-                        # Without t.me/ there is ambiguity; Stickers could be a name,
-                        # in which case the wrong entity could be returned
                         # TODO should this be translated?
-                        conv = message.client.conversation("t.me/" + self.config["STICKERS_USERNAME"],
+                        conv = message.client.conversation(self.config["STICKERS_ID"],
                                                            timeout=5, exclusive=True)
                         async with conv:
                             first = await conv.send_message("/cancel")
@@ -180,8 +178,7 @@ class StickersMod(loader.Module):
                                 return
                             else:
                                 logger.warning("there's no buttons!")
-                                m0 = await message.client.send_message("t.me/" + self.config["STICKERS_USERNAME"],
-                                                                       "/cancel")
+                                m0 = await message.client.send_message(self.config["STICKERS_ID"], "/cancel")
                                 await message.edit("<code>Something went wrong</code>")
                                 return
                             # We have sent the pack we wish to modify.
@@ -192,13 +189,12 @@ class StickersMod(loader.Module):
                                 logger.error(r0)
                                 await message.edit(_("<code>That's an animated pack</code>"))
                                 msgs = []
-                                async for msg in message.client.iter_messages(entity="t.me/"
-                                                                              + self.config["STICKERS_USERNAME"],
+                                async for msg in message.client.iter_messages(entity=self.config["STICKERS_ID"],
                                                                               min_id=first.id,
                                                                               reverse=True):
                                     msgs += [msg.id]
                                 logger.debug(msgs)
-                                await message.client.delete_messages("t.me/" + self.config["STICKERS_USERNAME"],
+                                await message.client.delete_messages(self.config["STICKERS_ID"],
                                                                      msgs + [first])
                                 return
                             if "120" in r0.message:
@@ -207,14 +203,13 @@ class StickersMod(loader.Module):
                                 await message.edit(_("<code>That pack is full. Delete some stickers or try making a "
                                                      "new pack.</code>"))
                                 msgs = []
-                                async for msg in message.client.iter_messages(entity="t.me/"
-                                                                              + self.config["STICKERS_USERNAME"],
+                                async for msg in message.client.iter_messages(entity=self.config["STICKERS_ID"],
                                                                               min_id=first.id,
                                                                               reverse=True):
                                     if msg.id != m0.id:
                                         msgs += [msg.id]
                                 logger.debug(msgs)
-                                await message.client.delete_messages("t.me/" + self.config["STICKERS_USERNAME"],
+                                await message.client.delete_messages(self.config["STICKERS_ID"],
                                                                      msgs + [first])
                                 return
                             m1 = await conv.send_file(thumb, allow_cache=False, force_document=True)
@@ -237,13 +232,12 @@ class StickersMod(loader.Module):
                                 await message.edit(_("<code>Something went wrong internally!</code>"))
                                 return
                             msgs = []
-                            async for msg in message.client.iter_messages(entity="t.me/"
-                                                                          + self.config["STICKERS_USERNAME"],
+                            async for msg in message.client.iter_messages(entity=self.config["STICKERS_ID"],
                                                                           min_id=first.id,
                                                                           reverse=True):
                                 msgs += [msg.id]
                         logger.debug(msgs)
-                        await message.client.delete_messages("t.me/" + self.config["STICKERS_USERNAME"], msgs + [first])
+                        await message.client.delete_messages(self.config["STICKERS_ID"], msgs + [first])
                         if "emoji" in r2.message:
                             # The emoji(s) are invalid.
                             logger.error("Bad response from StickerBot 2")
@@ -254,14 +248,26 @@ class StickersMod(loader.Module):
                     thumb.close()
         finally:
             img.close()
-        packurl = utils.escape_quotes(f"https://t.me/addstickers/{button.text}")
+        packurl = utils.escape_html(f"https://t.me/addstickers/{button.text}")
         await message.edit(_('<code>Sticker added to</code> <a href="{}">pack</a><code>!</code>').format(packurl))
 
     async def gififycmd(self, message):
         """Convert the replied animated sticker to a GIF"""
+        args = utils.get_args(message)
+        fps = 5
+        quality = 256
+        try:
+            if len(args) == 1:
+                fps = int(args[0])
+            elif len(args) == 2:
+                quality = int(args[0])
+                fps = int(args[1])
+        except ValueError:
+            logger.exception("Failed to parse quality/fps")
         target = await message.get_reply_message()
         if target is None or target.file is None or target.file.mime_type != "application/x-tgsticker":
             await utils.answer(message, _("<code>Please provide an animated sticker to convert to a GIF</code>"))
+            return
         try:
             file = BytesIO()
             await target.download_media(file)
@@ -270,7 +276,7 @@ class StickersMod(loader.Module):
             file.close()
             result = BytesIO()
             result.name = "animation.gif"
-            tgs.exporters.gif.export_gif(anim, result, 256, 5)
+            await utils.run_sync(tgs.exporters.gif.export_gif, anim, result, quality, fps)
             result.seek(0)
             await utils.answer(message, result)
         finally:
