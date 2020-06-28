@@ -29,10 +29,10 @@ class YesNoMod(loader.Module):
 
     async def yesnocmd(self, message):
         """Make a life choice"""
-        # TODO translate
-        yes = ["Yes", "Yup", "Absolutely", "Non't"]
-        no = ["No", "Nope", "Nah", "Yesn't"]
         if random.getrandbits(1):
+            # TODO translate
+            yes = ["Yes", "Yup", "Absolutely", "Non't"]
             await message.edit(random.choice(yes))
         else:
+            no = ["No", "Nope", "Nah", "Yesn't"]
             await message.edit(random.choice(no))

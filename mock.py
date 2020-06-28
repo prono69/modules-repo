@@ -45,10 +45,7 @@ class MockMod(loader.Module):
         n = 0
         rn = 0
         for c in text:
-            if n % 2 == random.randint(0, 1):
-                text[rn] = c.upper()
-            else:
-                text[rn] = c.lower()
+            text[rn] = c.upper() if n % 2 == random.randint(0, 1) else c.lower()
             if c.lower() != c.upper():
                 n += 1
             rn += 1

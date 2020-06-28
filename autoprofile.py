@@ -141,7 +141,7 @@ class AutoProfileMod(loader.Module):
         await self.allmodules.log("start_autobio")
         await utils.answer(message, _("<b>Successfully enabled autobio.</b>"))
 
-        while self.bio_enabled is True:
+        while self.bio_enabled:
             current_time = time.strftime("%H:%M")
             bio = raw_bio.format(time=current_time)
             await self.client(functions.account.UpdateProfileRequest(
@@ -183,7 +183,7 @@ class AutoProfileMod(loader.Module):
         await self.allmodules.log("start_autoname")
         await utils.answer(message, _("<b>Successfully enabled autoname.</b>"))
 
-        while self.name_enabled is True:
+        while self.name_enabled:
             current_time = time.strftime("%H:%M")
             name = raw_name.format(time=current_time)
             await self.client(functions.account.UpdateProfileRequest(

@@ -47,15 +47,9 @@ class BEmojiMod(loader.Module):
                 n += 1
                 continue
             if len(self.config["REPLACABLE_CHARS"]) == 0:
-                if n % 2 == random.randint(0, 1):
-                    text[n] = "🅱️"
-                else:
-                    text[n] = c
+                text[n] = "🅱️" if n % 2 == random.randint(0, 1) else c
             else:
-                if c.lower() in self.config["REPLACABLE_CHARS"]:
-                    text[n] = "🅱️"
-                else:
-                    text[n] = c
+                text[n] = "🅱️" if c.lower() in self.config["REPLACABLE_CHARS"] else c
             n += 1
         text = "".join(text)
         logger.debug(text)

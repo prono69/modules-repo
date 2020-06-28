@@ -65,7 +65,6 @@ class LydiaMod(loader.Module):
                 session = await utils.run_sync(self._lydia.get_session, session["session_id"])
                 if session.available:
                     nsessions.update({ident: session})
-                pass
         if len(nsessions) > 1:
             next = min(*[v["expires"] for k, v in nsessions.items()])
         elif len(nsessions) == 1:
@@ -200,7 +199,4 @@ class LydiaMod(loader.Module):
 
     def is_forced(self, chat, user_id):
         forced = self._db.get(__name__, "force", [])
-        if [chat, user_id] in forced:
-            return True
-        else:
-            return False
+        return [chat, user_id] in forced

@@ -43,10 +43,7 @@ class TransferShMod(loader.Module):
 
     async def uploadshcmd(self, message):
         """Uploads to transfer.sh"""
-        if message.file:
-            msg = message
-        else:
-            msg = (await message.get_reply_message())
+        msg = message if message.file else (await message.get_reply_message())
         doc = msg.media
         if doc is None:
             await message.edit(_("<code>Provide a file to upload</code>"))
